@@ -33,7 +33,6 @@ class WinDistributor(Distributor):
             pkg_units += publish_conduit.get_units(criteria=criteria)
 
         for u in pkg_units:
-            _LOG.info("repo working dir: %s, http_publish dir: %s" % (u.unit_key['name'], u.storage_path))
             if config.get('serve-http') == "true":
                 http_publish_file = os.path.join(self.get_http_publish_dir(config), repo.id, u.unit_key['filename'])
                 # Create symlink from module.storage_path to HTTP-enabled directory
