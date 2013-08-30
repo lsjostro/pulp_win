@@ -28,7 +28,7 @@ class MsiUploader():
         distributor_path = repo_base + "%s/distributors/" % repo_id
 
         repo_metadata = {
-            "display_name": "Svenska Spel MSI repo: %s" % repo_id,
+            "display_name": "MSI repo: %s" % repo_id,
             "id": repo_id
         }
 
