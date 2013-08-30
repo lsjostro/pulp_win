@@ -1,0 +1,20 @@
+{"types": [
+    {
+        "id" : "msi",
+        "display_name" : "MSI",
+        "description" : "MSI",
+        "unit_key" :
+                ["name", "version", "filename", "checksumtype", "checksum"],
+        "search_indexes" :
+                ["name", "version", "filename", "checksum", "checksumtype"]
+    },
+    {
+        "id" : "exe",
+        "display_name" : "EXE",
+        "description" : "EXE",
+        "unit_key" :
+                ["name", "version", "filename", "checksumtype", "checksum"],
+        "search_indexes" :
+                ["name", "version", "filename", "checksum", "checksumtype"]
+    }
+]}
