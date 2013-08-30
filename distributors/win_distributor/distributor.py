@@ -23,6 +23,10 @@ class WinDistributor(Distributor):
     def publish_repo(self, repo, publish_conduit, config):
         publish_conduit.set_progress('Publishing modules')
         pkg_units = []
+        pkg_errors = []
+        summary = {}
+        details = {}
+
         for type_id in ['msi','exe']:
             criteria = UnitAssociationCriteria(type_id,
                        unit_fields=['id', 'name', 'version', 'filename', '_storage_path', "checksum", "checksumtype" ])
@@ -35,7 +39,16 @@ class WinDistributor(Distributor):
                 # Create symlink from module.storage_path to HTTP-enabled directory
                 if not self.create_symlink(u.storage_path, http_publish_file):
                     _LOG.error("Failed to create symlink")
-        publish_conduit.set_progress('Modules published')
+                    pkg_errors += u
+                publish_conduit.set_progress('Unit published')
+        summary["num_package_units_attempted"] = len(pkg_units)
+        summary["num_package_units_published"] = len(pkg_units) - len(pkg_errors)
+        summary["num_package_units_errors"] = len(pkg_errors)
+        details["errors"] = pkg_errors
+        _LOG.info("Publish complete:  summary = <%s>, details = <%s>" % (summary, details))
+        if details["errors"]:
+            return publish_conduit.build_failure_report(summary, details)
+        return publish_conduit.build_success_report(summary, details)
 
     def create_symlink(self, source_path, symlink_path):
         if symlink_path.endswith("/"):
