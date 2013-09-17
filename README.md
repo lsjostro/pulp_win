@@ -17,15 +17,15 @@ http://bonzini.fedorapeople.org/msitools-0.01.tar.gz
 
 Build the RPMs with fpm-cookery
 
+```
 Server:
-``` $ gem install fpm-cookery
+    $ gem install fpm-cookery
     $ cd fpm-cook-recipe/pulp-win-plugins-server
     $ fpm-cook
     $ sudo rpm -Uvh pkg/*.rpm
-```
 
 Admin extension:
-``` $ cd fpm-cook-recipe/pulp-win-plugins-admin
+    $ cd fpm-cook-recipe/pulp-win-plugins-admin
     $ fpm-cook
     $ sudo rpm -Uvh pkg/*.rpm
 ```
