@@ -7,9 +7,9 @@ WARNING: Might be lots of bugs.
 
 ### Requirements
 
-Need the following to be able to upload MSIs from Linux
-    python-sh
-    msitools-0.01 
+Need the following to be able to upload MSIs from Linux:
+  *  python-sh
+  *  msitools-0.01 
 
 http://bonzini.fedorapeople.org/msitools-0.01.tar.gz
 
