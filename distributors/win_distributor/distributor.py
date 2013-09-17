@@ -16,12 +16,23 @@ class WinDistributor(Distributor):
             'types' : ['msi','exe'],
         }
     def validate_config(self, repo, config, related_repos):
-        if config.get('serve-http') is None and config.get('serve-https') is None:
+        if config.get('http') is None and config.get('https') is None:
             return False, 'At least one of "serve-http" or "serve-https" must be specified'
         return True, None
 
     def publish_repo(self, repo, publish_conduit, config):
         publish_conduit.set_progress('Publishing modules')
+
+        progress_status = {
+            "packages":           {"state": "NOT_STARTED"},
+            "publish_http":       {"state": "NOT_STARTED"},
+            "publish_https":      {"state": "NOT_STARTED"},
+        }
+
+        def progress_callback(type_id, status):
+            progress_status[type_id] = status
+            publish_conduit.set_progress(progress_status)
+
         pkg_units = []
         pkg_errors = []
         summary = {}
@@ -32,14 +43,27 @@ class WinDistributor(Distributor):
                        unit_fields=['id', 'name', 'version', 'filename', '_storage_path', "checksum", "checksumtype" ])
             pkg_units += publish_conduit.get_units(criteria=criteria)
 
+        packages_progress_status = self.init_progress()
+        self.set_progress("packages", packages_progress_status, progress_callback)
+        packages_progress_status["items_total"] = len(pkg_units)
+        packages_progress_status["items_left"] =  len(pkg_units)
+
         for u in pkg_units:
-            if config.get('serve-http') == "true":
+            if config.get('http') is not None:
+                self.set_progress("publish_http", {"state" : "IN_PROGRESS"}, progress_callback)
                 http_publish_file = os.path.join(self.get_http_publish_dir(config), repo.id, u.unit_key['filename'])
                 # Create symlink from module.storage_path to HTTP-enabled directory
                 if not self.create_symlink(u.storage_path, http_publish_file):
-                    _LOG.error("Failed to create symlink")
+                    packages_progress_status["num_error"] += 1
+                    _LOG.error("Failed to create symlink: %s -> %s" % (u.storage_path, http_publish_file))
                     pkg_errors += u
-                publish_conduit.set_progress('Unit published')
+                else:
+                    packages_progress_status["num_success"] += 1
+                packages_progress_status["items_left"] -= 1
+                #publish_conduit.set_progress('Unit published')
+        packages_progress_status["state"] = "FINISHED"
+        self.set_progress("packages", packages_progress_status, progress_callback)
+        self.set_progress("publish_http", {"state" : "FINISHED"}, progress_callback)
         summary["num_package_units_attempted"] = len(pkg_units)
         summary["num_package_units_published"] = len(pkg_units) - len(pkg_errors)
         summary["num_package_units_errors"] = len(pkg_errors)
@@ -77,6 +101,7 @@ class WinDistributor(Distributor):
             except OSError, e:
                 _LOG.error("Failed to create directory: %s" % e)
                 return False
+        return True
 
     def get_http_publish_dir(self, config=None):
         if config:
@@ -85,3 +110,17 @@ class WinDistributor(Distributor):
                 _LOG.info("Override HTTP publish directory from passed in config value to: %s" % (publish_dir))
                 return publish_dir
         return HTTP_PUBLISH_DIR
+
+    def init_progress(self):
+        return  {
+            "state": "IN_PROGRESS",
+            "num_success" : 0,
+            "num_error" : 0,
+            "items_left" : 0,
+            "items_total" : 0,
+            "error_details" : [],
+        }
+
+    def set_progress(self, type_id, status, progress_callback=None):
+        if progress_callback:
+            progress_callback(type_id, status)

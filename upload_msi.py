@@ -40,7 +40,6 @@ class MsiUploader():
             "importer_config": {}
         }
         distributor_data = {
-            "distributor_id": "%s_dist" % repo_id,
             "distributor_type_id": "win_distributor",
             "distributor_config": { "serve-http": "true" },
             "auto_publish": True
@@ -106,7 +105,7 @@ class MsiUploader():
         repo_path = "/pulp/api/v2/repositories/%s/" % repo_id
         publish_path = repo_path + "actions/publish/"
         distributor_data = {
-            "id": "%s_dist" % repo_id,
+            "id": "win_distributor",
             "override_config": {}
         }
         r = requests.post(self.base_url + publish_path, auth=self.basic_auth, verify=False, data=json.dumps(distributor_data))
