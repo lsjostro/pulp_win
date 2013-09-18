@@ -87,7 +87,7 @@ class MsiUploader():
                 "upload_id": upload_id,
                 "unit_type_id": "msi",
                 "unit_key": { "name": name, "checksum": md5sum, "version": version, "checksumtype": "md5" },
-                "metadata": { "filename": os.path.basename(filename) }
+                "unit_metadata": { "filename": os.path.basename(filename) }
             }
             # Post metadata for unit
             r = requests.post(self.base_url + import_path, auth=self.basic_auth, verify=False, data=json.dumps(unit_metadata))
