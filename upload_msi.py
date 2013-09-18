@@ -65,11 +65,19 @@ class MsiUploader():
         upload_id = r.json()['upload_id']
 
         try:
-            md5sum = hashlib.md5(open(filename).read()).hexdigest()
+            m = hashlib.new('md5')
+            f = open(filename, 'rb')
+            while 1:
+                buffer = f.read(65536)
+                if not buffer:
+                    break
+                m.update(buffer)
+            f.close()
+            md5sum = m.hexdigest()
             file_size = os.path.getsize(filename)
             offset = 0
 
-            f = open(filename, 'r')
+            f = open(filename, 'rb')
             while True:
                 # Load the chunk to upload
                 f.seek(offset)
