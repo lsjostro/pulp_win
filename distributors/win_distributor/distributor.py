@@ -51,7 +51,7 @@ class WinDistributor(Distributor):
         for u in pkg_units:
             if config.get('http') is not None:
                 self.set_progress("publish_http", {"state" : "IN_PROGRESS"}, progress_callback)
-                filename = os.path.basename(u.unit_key['_storage_path'])
+                filename = os.path.basename(u.storage_path)
                 http_publish_file = os.path.join(self.get_http_publish_dir(config), repo.id, filename)
                 # Create symlink from module.storage_path to HTTP-enabled directory
                 if not self.create_symlink(u.storage_path, http_publish_file):
