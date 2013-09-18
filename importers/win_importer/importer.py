@@ -44,7 +44,7 @@ class WinImporter(Importer):
     def _upload_unit(self, repo, type_id, unit_key, metadata, file_path, conduit, config):
         summary = {}
         details = {'errors' : []}
-        summary['filename'] = unit_key['filename']
+        summary['filename'] = metadata['filename']
         summary['num_units_processed'] = len([file_path])
         summary['num_units_saved'] = 0
 
@@ -57,8 +57,8 @@ class WinImporter(Importer):
             details['errors'].append(msg)
             return False, summary, details
         relative_path = "%s/%s/%s/%s" % (unit_key['name'], unit_key['version'],
-                                         unit_key['checksum'], unit_key['filename'])
-        metadata = {}
+                                         unit_key['checksum'], metadata['filename'])
+        #metadata = {}
         u = conduit.init_unit(type_id, unit_key, metadata, relative_path)
         new_path = u.storage_path
         try:

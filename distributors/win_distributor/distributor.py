@@ -40,7 +40,7 @@ class WinDistributor(Distributor):
 
         for type_id in ['msi','exe']:
             criteria = UnitAssociationCriteria(type_id,
-                       unit_fields=['id', 'name', 'version', 'filename', '_storage_path', "checksum", "checksumtype" ])
+                       unit_fields=['id', 'name', 'version', '_storage_path', "checksum", "checksumtype" ])
             pkg_units += publish_conduit.get_units(criteria=criteria)
 
         packages_progress_status = self.init_progress()
@@ -51,7 +51,8 @@ class WinDistributor(Distributor):
         for u in pkg_units:
             if config.get('http') is not None:
                 self.set_progress("publish_http", {"state" : "IN_PROGRESS"}, progress_callback)
-                http_publish_file = os.path.join(self.get_http_publish_dir(config), repo.id, u.unit_key['filename'])
+                filename = os.path.basename(u.unit_key['_storage_path'])
+                http_publish_file = os.path.join(self.get_http_publish_dir(config), repo.id, filename)
                 # Create symlink from module.storage_path to HTTP-enabled directory
                 if not self.create_symlink(u.storage_path, http_publish_file):
                     packages_progress_status["num_error"] += 1

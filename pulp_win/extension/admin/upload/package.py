@@ -88,6 +88,6 @@ def _generate_msi_data(msi_filename):
     unit_key['checksum'] = m.hexdigest()
     unit_key['name'] = headers['ProductName']
     unit_key['version'] = headers['ProductVersion']
-    unit_key['filename'] = os.path.basename(msi_filename)
+    metadata['filename'] = os.path.basename(msi_filename)
 
     return unit_key, metadata

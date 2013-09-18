@@ -4,7 +4,7 @@
         "display_name" : "MSI",
         "description" : "MSI",
         "unit_key" :
-                ["name", "version", "filename", "checksumtype", "checksum"],
+                ["name", "version", "checksumtype", "checksum"],
         "search_indexes" :
                 ["name", "version", "filename", "checksum", "checksumtype"]
     },
@@ -13,7 +13,7 @@
         "display_name" : "EXE",
         "description" : "EXE",
         "unit_key" :
-                ["name", "version", "filename", "checksumtype", "checksum"],
+                ["name", "version", "checksumtype", "checksum"],
         "search_indexes" :
                 ["name", "version", "filename", "checksum", "checksumtype"]
     }
