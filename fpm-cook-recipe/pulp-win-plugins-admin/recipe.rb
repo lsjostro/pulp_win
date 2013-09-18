@@ -2,7 +2,7 @@ class Pulp_win < FPM::Cookery::Recipe
   description 'Pulp Windows plugins admin extension'
   name        'pulp-win-plugins-admin'
   version     '0.1'
-  revision    '3'
+  revision    '4'
   homepage    'https://github.com/lsjostro/pulp_win/'
   source      'https://github.com/lsjostro/pulp_win.git', :with => :git
   arch        'noarch'

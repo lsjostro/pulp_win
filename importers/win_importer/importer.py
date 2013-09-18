@@ -58,7 +58,6 @@ class WinImporter(Importer):
             return False, summary, details
         relative_path = "%s/%s/%s/%s" % (unit_key['name'], unit_key['version'],
                                          unit_key['checksum'], metadata['filename'])
-        #metadata = {}
         u = conduit.init_unit(type_id, unit_key, metadata, relative_path)
         new_path = u.storage_path
         try:
@@ -88,3 +87,13 @@ class WinImporter(Importer):
             return False, summary, details
         _LOG.info("Upload complete with summary: %s; Details: %s" % (summary, details))
         return True, summary, details
+
+    def import_units(self, source_repo, dest_repo, import_conduit, config, units=None):
+        if not units:
+            # If no units are passed in, assume we will use all units from source repo
+            units = import_conduit.get_source_units()
+        _LOG.info("Importing %s units from %s to %s" % (len(units), source_repo.id, dest_repo.id))
+        for u in units:
+            if u.type_id == 'msi':
+                import_conduit.associate_unit(u)
+        _LOG.debug("%s units from %s have been associated to %s" % (len(units), source_repo.id, dest_repo.id))
