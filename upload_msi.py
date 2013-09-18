@@ -43,6 +43,7 @@ class MsiUploader():
         }
         distributor_data = {
             "distributor_type_id": "win_distributor",
+            "distributor_id": "win_distributor",
             "distributor_config": { "http" : True, "https" : False, "relative_url" : repo_id },
             "auto_publish": True
         }
