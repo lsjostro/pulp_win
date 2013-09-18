@@ -86,15 +86,19 @@ class MsiUploader():
 
                 offset = min(offset + CHUNK_SIZE, file_size)
             f.close()
+            md5sum = m.hexdigest()
+
             unit_metadata = {
                 "upload_id": upload_id,
                 "unit_type_id": "msi",
-                "unit_key": { "name": name, "checksum": m.hexdigest(), "version": version, "checksumtype": "md5" },
+                "unit_key": { "name": name, "checksum": md5sum, "version": version, "checksumtype": "md5" },
                 "unit_metadata": { "filename": os.path.basename(filename) }
             }
             # Post metadata for unit
             r = requests.post(self.base_url + import_path, auth=self.basic_auth, verify=False, data=json.dumps(unit_metadata))
             r.raise_for_status()
+
+            print "%s (%s): OK!" % (filename, md5sum)
 
         except (HTTPError, IOError), e:
             raise
@@ -130,8 +134,8 @@ class MsiUploader():
 def parse_options():
     parser = OptionParser()
 
-    parser.add_option('-f', '--file', type="string", dest="filename",
-                     help="msi file")
+    parser.add_option('-f', '--files', type="string", dest="files",
+                     help="MSI file[s] to upload (wild cards are supported, e.g *.msi)")
     parser.add_option('-u', '--username', type="string", dest="username",
                      help="Username")
     parser.add_option('-p', '--password', type="string", dest="password",
@@ -142,7 +146,7 @@ def parse_options():
                      help="Repo ID")
     options, args = parser.parse_args()
 
-    if (not options.filename or not options.repo_id or not options.base_url
+    if (not options.files or not options.repo_id or not options.base_url
         or not options.username or not options.password):
         parser.error("use --help for help ")
 
@@ -151,8 +155,8 @@ def parse_options():
 def main():
     options = parse_options()
 
-    filename = glob(options.filename)
-    if not filename:
+    files = glob(options.files)
+    if not files:
         raise OSError("File not found")
 
     m = MsiUploader(options.base_url, options.username, options.password)
@@ -160,12 +164,11 @@ def main():
     ## Check if repo exists else create it.
     if not m.get_repo(options.repo_id):
         m.create_repo(options.repo_id)
-    ## Upload file
-    m.upload_file(filename[0], options.repo_id)
+    ## Upload files
+    for f in files:
+        m.upload_file(f, options.repo_id)
     ## Publish unit
     m.publish_repo(options.repo_id)
-
-    print "Upload complete!"
 
 if __name__ == '__main__':
     main()
