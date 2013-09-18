@@ -6,6 +6,7 @@ from requests.exceptions import HTTPError
 import hashlib
 import json
 from optparse import OptionParser
+from glob import glob
 from msilib import *
 
 CHUNK_SIZE = 1048576 # 1 Mb chunk size
@@ -150,7 +151,8 @@ def parse_options():
 def main():
     options = parse_options()
 
-    if not os.path.isfile(options.filename):
+    filename = glob(options.filename)
+    if not filename:
         raise OSError("File not found")
 
     m = MsiUploader(options.base_url, options.username, options.password)
@@ -159,7 +161,7 @@ def main():
     if not m.get_repo(options.repo_id):
         m.create_repo(options.repo_id)
     ## Upload file
-    m.upload_file(options.filename, options.repo_id)
+    m.upload_file(filename[0], options.repo_id)
     ## Publish unit
     m.publish_repo(options.repo_id)
 
