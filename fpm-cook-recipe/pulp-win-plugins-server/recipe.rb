@@ -15,6 +15,8 @@ class Pulp_win < FPM::Cookery::Recipe
 
   #depends python
 
+  post_install   'postinst'
+
   def build
   end
 
