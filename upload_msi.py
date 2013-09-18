@@ -65,18 +65,10 @@ class MsiUploader():
         upload_id = r.json()['upload_id']
 
         try:
-            m = hashlib.new('md5')
-            f = open(filename, 'rb')
-            while 1:
-                buffer = f.read(65536)
-                if not buffer:
-                    break
-                m.update(buffer)
-            f.close()
-            md5sum = m.hexdigest()
             file_size = os.path.getsize(filename)
             offset = 0
 
+            m = hashlib.new('md5')
             f = open(filename, 'rb')
             while True:
                 # Load the chunk to upload
@@ -84,17 +76,19 @@ class MsiUploader():
                 data = f.read(CHUNK_SIZE)
                 if not data:
                     break
+                # calc md5
+                m.update(data)
                 # Server request
                 upload_path = "/pulp/api/v2/content/uploads/%s/%s/" % (upload_id, offset)
                 r = requests.put(self.base_url + upload_path, auth=self.basic_auth, verify=False, data=data)
                 r.raise_for_status()
 
                 offset = min(offset + CHUNK_SIZE, file_size)
-
+            f.close()
             unit_metadata = {
                 "upload_id": upload_id,
                 "unit_type_id": "msi",
-                "unit_key": { "name": name, "checksum": md5sum, "version": version, "checksumtype": "md5" },
+                "unit_key": { "name": name, "checksum": m.hexdigest(), "version": version, "checksumtype": "md5" },
                 "unit_metadata": { "filename": os.path.basename(filename) }
             }
             # Post metadata for unit
