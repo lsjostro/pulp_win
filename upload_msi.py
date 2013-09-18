@@ -29,7 +29,8 @@ class MsiUploader():
 
         repo_metadata = {
             "display_name": "MSI repo: %s" % repo_id,
-            "id": repo_id
+            "id": repo_id,
+            "notes": { "_repo-type" : "win-repo" }
         }
 
         r = requests.post(self.base_url + repo_base, auth=self.basic_auth, verify=False, data=json.dumps(repo_metadata))
@@ -41,7 +42,7 @@ class MsiUploader():
         }
         distributor_data = {
             "distributor_type_id": "win_distributor",
-            "distributor_config": { "serve-http": "true" },
+            "distributor_config": { "http" : True, "https" : False, "relative_url" : repo_id },
             "auto_publish": True
         }
 
@@ -85,7 +86,7 @@ class MsiUploader():
             unit_metadata = {
                 "upload_id": upload_id,
                 "unit_type_id": "msi",
-                "unit_key": { "name": name, "checksum": md5sum, "version": version, "checksumtype": "md5" }
+                "unit_key": { "name": name, "checksum": md5sum, "version": version, "checksumtype": "md5" },
                 "metadata": { "filename": os.path.basename(filename) }
             }
             # Post metadata for unit
