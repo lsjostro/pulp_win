@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright © 2012 Red Hat, Inc.
-#
 # This software is licensed to you under the GNU General Public
 # License as published by the Free Software Foundation; either version
 # 2 of the License (GPLv2) or (at your option) any later version.
@@ -34,8 +32,8 @@ def initialize(context):
     repo_section.add_command(repo.MsiRepoListCommand(context))
     repo_section.add_command(RepoSearchCommand(context, constants.REPO_NOTE_WIN))
 
-    copy_section = structure.repo_copy_section(context.cli)
-    copy_section.add_command(copy.MsiCopyCommand(context))
+    #copy_section = structure.repo_copy_section(context.cli)
+    #copy_section.add_command(copy.MsiCopyCommand(context))
 
     remove_section = structure.repo_remove_section(context.cli)
     remove_section.add_command(remove.MsiRemoveCommand(context))
