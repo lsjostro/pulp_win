@@ -56,6 +56,14 @@ class WinImporter(Importer):
             _LOG.error(msg)
             details['errors'].append(msg)
             return False, summary, details
+
+        file_checksum = util.get_file_checksum(filename=file_path, hashtype=unit_key['checksumtype'])
+        if file_checksum != unit_key['checksum']:
+            msg = "File checksum [%s] missmatch" % file_path
+            _LOG.error(msg)
+            details['errors'].append(msg)
+            return False, summary, details
+
         relative_path = "%s/%s/%s/%s" % (unit_key['name'], unit_key['version'],
                                          unit_key['checksum'], metadata['filename'])
         u = conduit.init_unit(type_id, unit_key, metadata, relative_path)
