@@ -15,7 +15,7 @@ class WinDistributor(Distributor):
             'display_name' : 'Windows Distributor',
             'types' : ['msi','exe'],
         }
-    def validate_config(self, repo, config, related_repos):
+    def validate_config(self, repo, config, config_conduit):
         if config.get('http') is None and config.get('https') is None:
             return False, 'At least one of "serve-http" or "serve-https" must be specified'
         return True, None

@@ -20,7 +20,7 @@ class WinImporter(Importer):
             'types': ['msi', 'exe']
         }
 
-    def validate_config(self, repo, config, related_repos):
+    def validate_config(self, repo, config):
         #return configuration.validate(config)
         return True, None
 
