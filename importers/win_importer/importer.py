@@ -3,7 +3,7 @@ import os
 import logging
 from pulp_rpm.yum_plugin import util
 from pulp.plugins.importer import Importer
-from pulp.plugins.model import SyncReport
+#from pulp.plugins.model import SyncReport
 from gettext import gettext as _
 
 _LOG = logging.getLogger(__name__)
@@ -31,14 +31,17 @@ class WinImporter(Importer):
             if summary.has_key("num_units_saved"):
                 num_units_saved = int(summary["num_units_saved"])
             if status:
-                report = SyncReport(True, num_units_saved, 0, 0, summary, details)
+                report = {'success_flag': True, 'summary': summary, 'details': details}
+                #report = SyncReport(True, num_units_saved, 0, 0, summary, details)
             else:
-                report = SyncReport(False, num_units_saved, 0, 0, summary, details)
+                report = {'success_flag': False, 'summary': summary, 'details': details}
+                #report = SyncReport(False, num_units_saved, 0, 0, summary, details)
         except Exception, e:
             _LOG.exception("Caught Exception: %s" % (e))
             summary = {}
             summary["error"] = str(e)
-            report = SyncReport(False, 0, 0, 0, summary, None)
+            report = {'success_flag': False, 'summary': summary, 'details': {}}
+            #report = SyncReport(False, 0, 0, 0, summary, None)
         return report
 
     def _upload_unit(self, repo, type_id, unit_key, metadata, file_path, conduit, config):
