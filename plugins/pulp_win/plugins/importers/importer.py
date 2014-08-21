@@ -1,7 +1,7 @@
 import shutil
 import os
 import logging
-from pulp_rpm.yum_plugin import util
+import hashlib
 from pulp.plugins.importer import Importer
 #from pulp.plugins.model import SyncReport
 from gettext import gettext as _
@@ -63,7 +63,7 @@ class WinImporter(Importer):
             details['errors'].append(msg)
             return False, summary, details
 
-        file_checksum = util.get_file_checksum(filename=file_path, hashtype=unit_key['checksumtype'])
+        file_checksum = get_file_checksum(filename=file_path, hashtype=unit_key['checksumtype'])
         if file_checksum != unit_key['checksum']:
             msg = "File checksum [%s] missmatch" % file_path
             _LOG.error(msg)
@@ -76,7 +76,7 @@ class WinImporter(Importer):
         new_path = u.storage_path
         try:
             if os.path.exists(new_path):
-                existing_checksum = util.get_file_checksum(filename=new_path, hashtype=unit_key['checksumtype'])
+                existing_checksum = get_file_checksum(filename=new_path, hashtype=unit_key['checksumtype'])
                 if existing_checksum != unit_key['checksum']:
                     # checksums dont match, remove existing file
                     os.remove(new_path)
@@ -111,3 +111,37 @@ class WinImporter(Importer):
             if u.type_id == 'msi':
                 import_conduit.associate_unit(u)
         _LOG.debug("%s units from %s have been associated to %s" % (len(units), source_repo.id, dest_repo.id))
+
+    def get_file_checksum(filename=None, fd=None, file=None, buffer_size=None, hashtype="sha256"):
+        """
+        Compute a file's checksum.
+        """
+        if hashtype in ['sha', 'SHA']:
+            hashtype = 'sha1'
+
+        if buffer_size is None:
+            buffer_size = 65536
+
+        if filename is None and fd is None and file is None:
+            raise Exception("no file specified")
+        if file:
+            f = file
+        elif fd is not None:
+            f = os.fdopen(os.dup(fd), "r")
+        else:
+            f = open(filename, "r")
+        # Rewind it
+        f.seek(0, 0)
+        m = hashlib.new(hashtype)
+        while 1:
+            buffer = f.read(buffer_size)
+            if not buffer:
+                break
+            m.update(buffer)
+
+        # cleanup time
+        if file is not None:
+            file.seek(0, 0)
+        else:
+            f.close()
+        return m.hexdigest()
