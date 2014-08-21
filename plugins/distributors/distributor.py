@@ -7,6 +7,9 @@ from pulp.plugins.conduits.mixins import UnitAssociationCriteria
 _LOG = logging.getLogger(__name__)
 HTTP_PUBLISH_DIR = "/var/www/pulp_win/http/repos"
 
+def entry_point():
+    return WinDistributor, {}
+
 class WinDistributor(Distributor):
     @classmethod
     def metadata(cls):

@@ -8,6 +8,9 @@ from gettext import gettext as _
 
 _LOG = logging.getLogger(__name__)
 
+def entry_point():
+    return WinImporter, {}
+
 class WinImporter(Importer):
     def __init__(self):
         super(WinImporter, self).__init__()
