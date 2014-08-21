@@ -15,20 +15,9 @@ http://bonzini.fedorapeople.org/msitools-0.01.tar.gz
 
 ### Installation
 
-Build the RPMs with fpm-cookery
+Build the RPMs from spec file
 
 ```
-Server:
-    $ gem install fpm-cookery
-    $ cd fpm-cook-recipe/pulp-win-plugins-server
-    $ fpm-cook
-    $ sudo rpm -Uvh pkg/*.rpm
-
-Admin extension:
-    $ cd fpm-cook-recipe/pulp-win-plugins-admin
-    $ fpm-cook
-    $ sudo rpm -Uvh pkg/*.rpm
-
 Example Usage:
 
     ~ $  pulp-admin win repo create --serve-http=true  --repo-id win-test-repo
