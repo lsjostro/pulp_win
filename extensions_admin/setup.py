@@ -9,7 +9,7 @@ setup(
     author_email='lars@radicore.se',
     entry_points={
         'pulp.extensions.admin': [
-            'win_repo_admin = pulp_win.extensions.admin.rpm_repo.pulp_cli:initialize',
+            'win_repo_admin = pulp_win.extensions.admin.win_repo.pulp_cli:initialize',
         ]
     }
 )
