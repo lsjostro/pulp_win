@@ -106,9 +106,9 @@ A collection of modules shared among all Win components.
 %dir %{python_sitelib}/pulp_win
 %{python_sitelib}/pulp_win_common*.egg-info
 %{python_sitelib}/pulp_win/__init__.py*
-%{python_sitelib}/pulp_win/extensions/__init__.py*
+#%{python_sitelib}/pulp_win/extensions/__init__.py*
 %{python_sitelib}/pulp_win/common/
-%doc LICENSE COPYRIGHT
+%doc LICENSE
 
 # ---- Plugins -----------------------------------------------------------------
 %if %{pulp_server}
@@ -152,6 +152,7 @@ client capabilites with Win specific features.
 %files admin-extensions
 %defattr(-,root,root,-)
 %{python_sitelib}/pulp_win_extensions_admin*.egg-info
+%{python_sitelib}/pulp_win/extensions/__init__.py*
 %{python_sitelib}/pulp_win/extensions/admin/
 %doc LICENSE
 %endif # End pulp_admin if block
