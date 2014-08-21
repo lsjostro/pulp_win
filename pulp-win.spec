@@ -117,7 +117,6 @@ Summary: Pulp Win plugins
 Group: Development/Languages
 Requires: python-pulp-win-common = %{pulp_version}
 Requires: pulp-server = %{pulp_version}
-Requires: msitools
 Obsoletes: pulp-win-plugins-server <= 2.4.0
 
 %description plugins
@@ -144,6 +143,8 @@ Summary: The Win admin client extensions
 Group: Development/Languages
 Requires: pulp-admin-client = %{pulp_version}
 Requires: python-pulp-win-common = %{pulp_version}
+Requires: msitools
+Requires: python-sh
 
 %description admin-extensions
 A collection of extensions that supplement and override generic admin
