@@ -1,3 +1,0 @@
-#!/bin/sh
-# postinst script 
-chown apache:apache /var/www/pulp_win/http/repos
