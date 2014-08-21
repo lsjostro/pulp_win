@@ -16,10 +16,10 @@ from pulp.client.commands.repo import cudl, sync_publish, upload
 from pulp.client.commands.repo.query import RepoSearchCommand
 from pulp.client.upload import manager as upload_lib
 
-from pulp_win.extension.admin import (contents, copy, remove, repo,
+from pulp_win.extensions.admin import (contents, copy, remove, repo,
                                       status, structure)
 from pulp_win.common import constants, ids
-from pulp_win.extension.admin.upload import package
+from pulp_win.extensions.admin.upload import package
 
 def initialize(context):
     structure.ensure_repo_structure(context.cli)

@@ -21,7 +21,7 @@ from pulp.common.util import encode_unicode
 
 from pulp_win.common import constants, ids
 from pulp_win.common.ids import WIN_DISTRIBUTOR_ID
-from pulp_win.extension.admin import repo_options
+from pulp_win.extensions.admin import repo_options
 
 # -- constants ----------------------------------------------------------------
 
