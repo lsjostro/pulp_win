@@ -63,7 +63,7 @@ class WinImporter(Importer):
             details['errors'].append(msg)
             return False, summary, details
 
-        file_checksum = get_file_checksum(filename=file_path, hashtype=unit_key['checksumtype'])
+        file_checksum = self.get_file_checksum(filename=file_path, hashtype=unit_key['checksumtype'])
         if file_checksum != unit_key['checksum']:
             msg = "File checksum [%s] missmatch" % file_path
             _LOG.error(msg)
@@ -76,7 +76,7 @@ class WinImporter(Importer):
         new_path = u.storage_path
         try:
             if os.path.exists(new_path):
-                existing_checksum = get_file_checksum(filename=new_path, hashtype=unit_key['checksumtype'])
+                existing_checksum = self.get_file_checksum(filename=new_path, hashtype=unit_key['checksumtype'])
                 if existing_checksum != unit_key['checksum']:
                     # checksums dont match, remove existing file
                     os.remove(new_path)
@@ -112,7 +112,7 @@ class WinImporter(Importer):
                 import_conduit.associate_unit(u)
         _LOG.debug("%s units from %s have been associated to %s" % (len(units), source_repo.id, dest_repo.id))
 
-    def get_file_checksum(filename=None, fd=None, file=None, buffer_size=None, hashtype="sha256"):
+    def get_file_checksum(self, filename=None, fd=None, file=None, buffer_size=None, hashtype="sha256"):
         """
         Compute a file's checksum.
         """
