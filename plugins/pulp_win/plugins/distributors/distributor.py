@@ -2,7 +2,7 @@ import logging
 import os
 
 from pulp.plugins.distributor import Distributor
-from pulp.plugins.conduits.mixins import UnitAssociationCriteria
+from pulp.server.db.model.criteria import UnitAssociationCriteria
 
 _LOG = logging.getLogger(__name__)
 HTTP_PUBLISH_DIR = "/var/www/pulp_win/http/repos"
