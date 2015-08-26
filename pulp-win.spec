@@ -9,6 +9,9 @@
 %define pulp_server 1
 %endif
 
+# define required pulp platform version.
+%define pulp_version 2.6.2
+
 
 # ---- Pulp (win) --------------------------------------------------------------
 
@@ -86,16 +89,12 @@ mkdir -p %{buildroot}/%{_var}/www/pulp_win/http/repos
 %clean
 rm -rf %{buildroot}
 
-# define required pulp platform version.
-%global pulp_version %{version}
-
 
 # ---- Win Common --------------------------------------------------------------
 
 %package -n python-pulp-win-common
 Summary: Pulp Windows support common library
 Group: Development/Languages
-Requires: python-pulp-common = %{pulp_version}
 Obsoletes: pulp-win-plugins-admin <= 2.4.0
 
 %description -n python-pulp-win-common
@@ -115,7 +114,7 @@ A collection of modules shared among all Win components.
 %package plugins
 Summary: Pulp Win plugins
 Group: Development/Languages
-Requires: python-pulp-win-common = %{pulp_version}
+Requires: python-pulp-win-common = %{version}
 Requires: pulp-server = %{pulp_version}
 Obsoletes: pulp-win-plugins-server <= 2.4.0
 
@@ -142,7 +141,7 @@ to provide Win specific support.
 Summary: The Win admin client extensions
 Group: Development/Languages
 Requires: pulp-admin-client = %{pulp_version}
-Requires: python-pulp-win-common = %{pulp_version}
+Requires: python-pulp-win-common = %{version}
 Requires: msitools
 Requires: python-sh
 
@@ -159,5 +158,5 @@ client capabilites with Win specific features.
 %endif # End pulp_admin if block
 
 %changelog
-* Tue Aug 21 2014 lars sjostrom <lars@radicore.se> 2.4.0-1
+* Tue Aug 21 2014 lars sjostrom <lars@radicore.se> - 2.4.0-1
 -  initial spec (lars@radicore.se)
