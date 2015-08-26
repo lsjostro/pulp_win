@@ -3,6 +3,7 @@ import os
 
 from pulp.plugins.distributor import Distributor
 from pulp.server.db.model.criteria import UnitAssociationCriteria
+from pulp_win.common.ids import TYPE_ID_MSI, TYPE_ID_EXE
 
 _LOG = logging.getLogger(__name__)
 HTTP_PUBLISH_DIR = "/var/www/pulp_win/http/repos"
@@ -36,15 +37,12 @@ class WinDistributor(Distributor):
             progress_status[type_id] = status
             publish_conduit.set_progress(progress_status)
 
-        pkg_units = []
         pkg_errors = []
         summary = {}
         details = {}
 
-        for type_id in ['msi','exe']:
-            criteria = UnitAssociationCriteria(type_id,
-                       unit_fields=['id', 'name', 'version', '_storage_path', "checksum", "checksumtype" ])
-            pkg_units += publish_conduit.get_units(criteria=criteria)
+        search = UnitAssociationCriteria(type_ids=[TYPE_ID_MSI, TYPE_ID_EXE])
+        pkg_units = publish_conduit.get_source_units(criteria=search)
 
         packages_progress_status = self.init_progress()
         self.set_progress("packages", packages_progress_status, progress_callback)
