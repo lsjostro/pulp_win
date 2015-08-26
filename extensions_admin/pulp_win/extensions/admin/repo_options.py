@@ -16,7 +16,7 @@ out of the repo commands module itself to keep it from becoming unwieldy.
 
 from gettext import gettext as _
 
-from pulp.client import parsers
+from okaara import parsers
 from pulp.client.commands import options as std_options
 from pulp.client.extensions.extensions import PulpCliOption, PulpCliOptionGroup
 
