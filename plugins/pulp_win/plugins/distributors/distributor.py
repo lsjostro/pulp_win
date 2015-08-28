@@ -1,15 +1,21 @@
+import errno
 import logging
 import os
 
+from gettext import gettext as _
+from pulp.plugins.util.publish_step import PublishStep
 from pulp.plugins.distributor import Distributor
 from pulp.server.db.model.criteria import UnitAssociationCriteria
-from pulp_win.common.ids import TYPE_ID_MSI, TYPE_ID_EXE
+from pulp_win.common import ids, constants
 
 _LOG = logging.getLogger(__name__)
-HTTP_PUBLISH_DIR = "/var/www/pulp_win/http/repos"
+HTTP_PUBLISH_DIR = "/var/www/pub/win/http/repos"
 
 def entry_point():
     return WinDistributor, {}
+
+class SymlinkError(Exception):
+    pass
 
 class WinDistributor(Distributor):
     @classmethod
@@ -25,104 +31,82 @@ class WinDistributor(Distributor):
         return True, None
 
     def publish_repo(self, repo, publish_conduit, config):
-        publish_conduit.set_progress('Publishing modules')
+        publisher = Publisher(repo=repo, publish_conduit=publish_conduit,
+                config=config, distributor_type=ids.TYPE_ID_DISTRIBUTOR_WIN)
+        return publisher.publish()
 
-        progress_status = {
-            "packages":           {"state": "NOT_STARTED"},
-            "publish_http":       {"state": "NOT_STARTED"},
-            "publish_https":      {"state": "NOT_STARTED"},
-        }
+class Publisher(PublishStep):
+    description = _("Publishing windows artifacts")
+    def __init__(self, *args, **kwargs):
+        super(Publisher, self).__init__(step_type=constants.PUBLISH_REPO_STEP,
+                *args, **kwargs)
+        self.add_child(ModulePublisher(publish_conduit=self.get_conduit(),
+            config=self.get_config(), repo=self.get_repo()))
+        self.description = self.__class__.description
 
-        def progress_callback(type_id, status):
-            progress_status[type_id] = status
-            publish_conduit.set_progress(progress_status)
+class ModulePublisher(PublishStep):
+    description = _("Publishing modules")
 
-        pkg_errors = []
-        summary = {}
-        details = {}
+    def __init__(self, **kwargs):
+        kwargs.setdefault('step_type', constants.PUBLISH_MODULES_STEP)
+        super(ModulePublisher, self).__init__(**kwargs)
+        self.description = self.__class__.description
+        self._symlinks = set()
+        self._items = None
 
-        search = UnitAssociationCriteria(type_ids=[TYPE_ID_MSI, TYPE_ID_EXE])
-        pkg_units = publish_conduit.get_source_units(criteria=search)
+    def get_iterator(self):
+        if self._items is not None:
+            return self._items
+        search = UnitAssociationCriteria(type_ids=[ids.TYPE_ID_MSI, ids.TYPE_ID_EXE])
+        conduit = self.get_conduit()
+        self._items = conduit.get_units(criteria=search)
+        return self._items
 
-        packages_progress_status = self.init_progress()
-        self.set_progress("packages", packages_progress_status, progress_callback)
-        packages_progress_status["items_total"] = len(pkg_units)
-        packages_progress_status["items_left"] =  len(pkg_units)
+    def _get_total(self):
+        return len(self.get_iterator())
 
-        for u in pkg_units:
-            if config.get('http') is not None:
-                self.set_progress("publish_http", {"state" : "IN_PROGRESS"}, progress_callback)
-                filename = os.path.basename(u.storage_path)
-                http_publish_file = os.path.join(self.get_http_publish_dir(config), repo.id, filename)
-                # Create symlink from module.storage_path to HTTP-enabled directory
-                if not self.create_symlink(u.storage_path, http_publish_file):
-                    packages_progress_status["num_error"] += 1
-                    _LOG.error("Failed to create symlink: %s -> %s" % (u.storage_path, http_publish_file))
-                    pkg_errors += u
-                else:
-                    packages_progress_status["num_success"] += 1
-                packages_progress_status["items_left"] -= 1
-                #publish_conduit.set_progress('Unit published')
-        packages_progress_status["state"] = "FINISHED"
-        self.set_progress("packages", packages_progress_status, progress_callback)
-        self.set_progress("publish_http", {"state" : "FINISHED"}, progress_callback)
-        summary["num_package_units_attempted"] = len(pkg_units)
-        summary["num_package_units_published"] = len(pkg_units) - len(pkg_errors)
-        summary["num_package_units_errors"] = len(pkg_errors)
-        details["errors"] = pkg_errors
-        _LOG.info("Publish complete:  summary = <%s>, details = <%s>" % (summary, details))
-        if details["errors"]:
-            return publish_conduit.build_failure_report(summary, details)
-        return publish_conduit.build_success_report(summary, details)
+    def process_main(self, item=None):
+        if item is None:
+            return
+        _LOG.debug("Processing %s", item)
+        config = self.get_config()
+        if config.get('http') is not None:
+            publish_file = self.get_publish_file(item)
+            # Create symlink from module.storage_path to HTTP-enabled directory
+            self._create_symlink(item.storage_path, publish_file)
+            self._symlinks.add(publish_file)
+        self.progress_details = "Published %s=%s" % (item.unit_key['name'], item.unit_key['version'])
 
-    def create_symlink(self, source_path, symlink_path):
-        if symlink_path.endswith("/"):
-            symlink_path = symlink_path[:-1]
-        if os.path.lexists(symlink_path):
-            if not os.path.islink(symlink_path):
-                _LOG.error("%s is not a symbolic link as expected." % (symlink_path))
-                return False
-            existing_link_target = os.readlink(symlink_path)
-            if existing_link_target == source_path:
-                return True
-            _LOG.warning("Removing <%s> since it was pointing to <%s> and not <%s>"\
-            % (symlink_path, existing_link_target, source_path))
-            os.unlink(symlink_path)
-            # Account for when the relativepath consists of subdirectories
-        if not self.create_dirs(os.path.dirname(symlink_path)):
-            return False
-        _LOG.debug("creating symlink %s pointing to %s" % (symlink_path, source_path))
-        os.symlink(source_path, symlink_path)
-        return True
-
-    def create_dirs(self, target):
-        if not os.path.exists(target):
-            try:
-                os.makedirs(target)
-                return True
-            except OSError, e:
-                _LOG.error("Failed to create directory: %s" % e)
-                return False
-        return True
+    def post_process(self):
+        _LOG.debug("Post-processing")
+        # Make sure we remove extra files
+        repo_dir = self.get_repo_dir()
+        try:
+            dir_contents = os.listdir(repo_dir)
+        except OSError, e:
+            if e.errno != errno.ENOENT:
+                # "No such file or directory" if the repo is empty and its
+                # directory hasn't been created
+                raise
+        for f in dir_contents:
+            fpath = os.path.join(repo_dir, f)
+            if os.path.isdir(fpath):
+                continue
+            if fpath not in self._symlinks:
+                os.unlink(fpath)
 
     def get_http_publish_dir(self, config=None):
         if config:
             publish_dir = config.get("http_publish_dir")
             if publish_dir:
-                _LOG.info("Override HTTP publish directory from passed in config value to: %s" % (publish_dir))
+                _LOG.debug("Override HTTP publish directory from passed in config value to: %s" % (publish_dir))
                 return publish_dir
         return HTTP_PUBLISH_DIR
 
-    def init_progress(self):
-        return  {
-            "state": "IN_PROGRESS",
-            "num_success" : 0,
-            "num_error" : 0,
-            "items_left" : 0,
-            "items_total" : 0,
-            "error_details" : [],
-        }
+    def get_repo_dir(self):
+        config = self.get_config()
+        return os.path.join(self.get_http_publish_dir(config),
+                self.get_repo().id, constants.CONFIG_REPO_SUBDIR)
 
-    def set_progress(self, type_id, status, progress_callback=None):
-        if progress_callback:
-            progress_callback(type_id, status)
+    def get_publish_file(self, item):
+        return os.path.join(self.get_repo_dir(), os.path.basename(item.storage_path))
