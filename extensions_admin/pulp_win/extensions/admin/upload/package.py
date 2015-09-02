@@ -11,10 +11,8 @@
 
 from gettext import gettext as _
 import hashlib
-import os
-import sys
 
-from pulp.client.commands.repo.upload import UploadCommand, MetadataException
+from pulp.client.commands.repo.upload import UploadCommand
 from pulp_win.common.ids import TYPE_ID_MSI
 
 
@@ -48,5 +46,5 @@ class CreateMsiCommand(UploadCommand):
                 break
             m.update(buffer)
         f.close()
-        metadata.update(checksum=m.hexdigest()
+        metadata.update(checksum=m.hexdigest())
         return {}, metadata
