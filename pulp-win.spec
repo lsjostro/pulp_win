@@ -86,6 +86,9 @@ cp -R plugins/types %{buildroot}/%{_usr}/lib/pulp/plugins
 # Directories
 mkdir -p %{buildroot}/%{_var}/www/pulp_win/http/repos
 
+# Remove tests
+rm -rf %{buildroot}/%{python_sitelib}/test
+
 %clean
 rm -rf %{buildroot}
 
