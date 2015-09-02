@@ -12,7 +12,6 @@
 from gettext import gettext as _
 import hashlib
 import os
-from sh import msiinfo
 import sys
 
 from pulp.client.commands.repo.upload import UploadCommand, MetadataException
@@ -40,54 +39,14 @@ class CreateMsiCommand(UploadCommand):
         return msis
 
     def generate_unit_key_and_metadata(self, filename, **kwargs):
-        unit_key, metadata = _generate_msi_data(filename)
-        return unit_key, metadata
-
-
-def _generate_msi_data(msi_filename):
-    """
-    For the given MSI, analyzes its metadata to generate the appropriate unit
-    key and metadata fields, returning both to the caller.
-
-    @param msi_filename: full path to the MSI to analyze
-    @type  msi_filename: str
-
-    @return: tuple of unit key and unit metadata for the MSI
-    @rtype:  tuple
-    """
-
-    # Expected unit key fields:
-    # "name", "version", "checksumtype", "checksum", "filename"
-
-    unit_key = dict()
-    metadata = dict()
-
-    # Read the MSI header attributes for use later
-    try:
-        msi_export = msiinfo(["export", msi_filename, "Property"]).rstrip()
-        headers = dict([h.rstrip().split('\t') for h in msi_export.split('\n')])
-    except:
-        # Raised if the headers cannot be read
-        msg = _('The given file is not a valid MSI')
-        raise MetadataException(msg), None, sys.exc_info()[2]
-
-    # -- Unit Key -----------------------
-
-    # Checksum
-    unit_key['checksumtype'] = 'md5' # hardcoded to this in v1 so leaving this way for now
-
-    m = hashlib.new(unit_key['checksumtype'])
-    f = open(msi_filename, 'r')
-    while 1:
-        buffer = f.read(65536)
-        if not buffer:
-            break
-        m.update(buffer)
-    f.close()
-
-    unit_key['checksum'] = m.hexdigest()
-    unit_key['name'] = headers['ProductName']
-    unit_key['version'] = headers['ProductVersion']
-    metadata['filename'] = os.path.basename(msi_filename)
-
-    return unit_key, metadata
+        metadata = dict(checksumtype="sha256")
+        m = hashlib.sha256()
+        f = open(filename, 'rb')
+        while 1:
+            buffer = f.read(65536)
+            if not buffer:
+                break
+            m.update(buffer)
+        f.close()
+        metadata.update(checksum=m.hexdigest()
+        return {}, metadata
