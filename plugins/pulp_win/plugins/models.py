@@ -1,10 +1,17 @@
 import hashlib
 import os
 import shutil
-from sh import msiinfo, ErrorReturnCode
+import subprocess
 from pulp_win.common import ids
 
-class InvalidPackageError(Exception):
+MSIINFO_PATH = '/usr/bin/msiinfo'
+if not os.path.exists(MSIINFO_PATH):
+    raise RuntimeError("msiinfo is not available")
+
+class Error(Exception):
+    pass
+
+class InvalidPackageError(Error):
     pass
 
 class Package(object):
@@ -12,18 +19,25 @@ class Package(object):
     UNIT_KEY_NAMES = set(['ProductName', 'ProductVersion',
         'checksumtype', 'checksum'])
     def __init__(self, unit_key, metadata):
-        self.unit_key = {}
-        self.metadata = {}
+        self.unit_key = unit_key
+        self.metadata = metadata
         self._unit = None
 
     @classmethod
-    def from_file(cls, filename, user_metadata, calculate_checksum=False):
+    def from_file(cls, filename, user_metadata=None, calculate_checksum=False):
+        if not user_metadata:
+            user_metadata = {}
+        cmd = [MSIINFO_PATH, 'export', filename, 'Property']
         try:
-            msi_export = msiinfo(["export", filename, "Property"]).rstrip()
-        except ErrorReturnCode, e:
-            raise InvalidPackageError(e.stderr)
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE)
+            stdout, stderr = p.communicate()
+        except Exception, e:
+            raise Error(str(e))
+        if p.returncode != 0:
+            raise InvalidPackageError(stderr)
         headers = ( h.rstrip().partition('\t')
-            for h in msi_export.split('\n') )
+            for h in stdout.split('\n') )
         headers = dict((x[0], x[2]) for x in headers if x[1] == '\t')
         unit_key = dict(checksumtype='sha256')
         checksum_type = user_metadata.get('checksumtype', '').lower()
