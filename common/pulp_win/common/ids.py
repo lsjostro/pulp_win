@@ -21,7 +21,7 @@ WIN_DISTRIBUTOR_ID = 'win_distributor'
 
 TYPE_ID_MSI = "msi"
 UNIT_KEY_MSI = (
-    "name", "version", "release", "checksum", "checksumtype")
+    "ProductName", "ProductVersion", "checksum", "checksumtype")
 
 TYPE_ID_EXE = "exe"
 UNIT_KEY_EXE = UNIT_KEY_MSI

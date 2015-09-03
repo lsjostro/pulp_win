@@ -14,18 +14,18 @@ import logging
 
 from pulp.client.extensions.extensions import PulpCliOptionGroup, PulpCliOption
 from pulp.client.commands.criteria import DisplayUnitAssociationsCommand
+from pulp_win.common import ids
 
 # -- constants ----------------------------------------------------------------
 
 # Must correspond to the IDs in the type definitions
-TYPE_MSI = 'msi'
+TYPE_MSI = ids.TYPE_ID_MSI
 
 # Intentionally does not include distributions; they should be looked up specifically
 ALL_TYPES = (TYPE_MSI)
 
 # List of all fields that the user can elect to display for each supported type
-FIELDS_MSI = ('checksum', 'checksumtype',
-              'filename', 'name', 'release', 'version')
+FIELDS_MSI = tuple(ids.UNIT_KEY_MSI)
 
 # Used when generating the --fields help text so it can be customized by type
 FIELDS_BY_TYPE = {
@@ -35,7 +35,7 @@ FIELDS_BY_TYPE = {
 # Ordering of metadata fields in each type. Keep in mind these are the display
 # ordering within a unit; the order of the units themselves in the returned
 # list from the server is dictated by the --ascending/--descending options.
-ORDER_MSI = ['name', 'version', 'release' ]
+ORDER_MSI = ids.UNIT_KEY_MSI
 
 # Used to lookup the right order list based on type
 ORDER_BY_TYPE = {
