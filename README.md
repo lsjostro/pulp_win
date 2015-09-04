@@ -8,7 +8,6 @@ WARNING: Might be lots of bugs.
 ### Requirements
 
 Need the following to be able to upload MSIs from Linux:
-  *  python-sh
   *  msitools-0.01 
 
 http://bonzini.fedorapeople.org/msitools-0.01.tar.gz
@@ -71,11 +70,9 @@ Example Usage:
     ... completed
 
     ~ $  pulp-admin win repo content msi  --repo-id win-test-repo
-    Checksum:     06f3a9975ae920aa6058887cc5be55c5
-    Checksumtype: md5
-    Filename:     nxlog-ce-2.5.1089.msi
-    Name:         NXLOG-CE
-    Version:      2.5.1089
-
+    Productname:    NXLOG-CE
+    Productversion: 2.5.1089
+    Checksum:       06f3a9975ae920aa6058887cc5be55c5
+    Checksumtype:   md5
 ```
 

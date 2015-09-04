@@ -120,7 +120,6 @@ Group: Development/Languages
 Requires: python-pulp-win-common = %{version}
 Requires: pulp-server = %{pulp_version}
 Requires: msitools
-Requires: python-sh
 Obsoletes: pulp-win-plugins-server <= 2.4.0
 
 %description plugins
