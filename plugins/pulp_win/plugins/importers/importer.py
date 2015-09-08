@@ -1,10 +1,10 @@
-import shutil
-import os
 import logging
-import hashlib
 from pulp.plugins.importer import Importer
+from pulp.plugins.util import verification
 #from pulp.plugins.model import SyncReport
 from gettext import gettext as _
+from pulp_win.common.ids import SUPPORTED_TYPES
+from pulp_win.plugins import models
 
 _LOG = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class WinImporter(Importer):
         return {
             'id': "win_importer",
             'display_name': _('Windows importer'),
-            'types': ['msi', 'exe']
+            'types': sorted(SUPPORTED_TYPES),
         }
 
     def validate_config(self, repo, config):
@@ -28,79 +28,33 @@ class WinImporter(Importer):
         return True, None
 
     def upload_unit(self, repo, type_id, unit_key, metadata, file_path, conduit, config):
+        if type_id not in SUPPORTED_TYPES:
+            return self.fail_report("Unsupported unit type {0}".format(type_id))
+        checksum_type = metadata.get('checksumtype')
+        checksum = metadata.get('checksum', '')
+        verification.sanitize_checksum_type(unit_key.get('checksumtype'))
+        checksum = checksum.lower()
         try:
-            num_units_saved = 0
-            status, summary, details = self._upload_unit(repo, type_id, unit_key, metadata, file_path, conduit, config)
-            if summary.has_key("num_units_saved"):
-                num_units_saved = int(summary["num_units_saved"])
-            if status:
-                report = {'success_flag': True, 'summary': summary, 'details': details}
-                #report = SyncReport(True, num_units_saved, 0, 0, summary, details)
-            else:
-                report = {'success_flag': False, 'summary': summary, 'details': details}
-                #report = SyncReport(False, num_units_saved, 0, 0, summary, details)
-        except Exception, e:
-            _LOG.exception("Caught Exception: %s" % (e))
-            summary = {}
-            summary["error"] = str(e)
-            report = {'success_flag': False, 'summary': summary, 'details': {}}
-            #report = SyncReport(False, 0, 0, 0, summary, None)
-        return report
-
-    def _upload_unit(self, repo, type_id, unit_key, metadata, file_path, conduit, config):
-        summary = {}
-        details = {'errors' : []}
-        summary['filename'] = metadata['filename']
-        summary['num_units_processed'] = len([file_path])
-        summary['num_units_saved'] = 0
-
-        if type_id not in ['msi','exe']:
-            raise NotImplementedError()
-
-        if not os.path.exists(file_path):
-            msg = "File path [%s] missing" % file_path
-            _LOG.error(msg)
-            details['errors'].append(msg)
-            return False, summary, details
-
-        file_checksum = self.get_file_checksum(filename=file_path, hashtype=unit_key['checksumtype'])
-        if file_checksum != unit_key['checksum']:
+            verification.verify_checksum(file(file_path, "rb"),
+                    checksum_type=checksum_type,
+                    checksum_value=checksum)
+        except verification.InvalidChecksumType, e:
+            _LOG.error(str(e))
+            return self.fail_report(str(e))
+        except verification.VerificationException:
             msg = "File checksum [%s] missmatch" % file_path
             _LOG.error(msg)
-            details['errors'].append(msg)
-            return False, summary, details
+            return self.fail_report("Checksum mismatch")
 
-        relative_path = "%s/%s/%s/%s" % (unit_key['name'], unit_key['version'],
-                                         unit_key['checksum'], metadata['filename'])
-        u = conduit.init_unit(type_id, unit_key, metadata, relative_path)
-        new_path = u.storage_path
         try:
-            if os.path.exists(new_path):
-                existing_checksum = self.get_file_checksum(filename=new_path, hashtype=unit_key['checksumtype'])
-                if existing_checksum != unit_key['checksum']:
-                    # checksums dont match, remove existing file
-                    os.remove(new_path)
-                else:
-                    _LOG.debug("Existing file is the same ")
-            if not os.path.isdir(os.path.dirname(new_path)):
-                os.makedirs(os.path.dirname(new_path))
-            # copy the unit to the final path
-            shutil.copy(file_path, new_path)
-        except (IOError, OSError), e:
-            msg = "Error copying upload file to final location [%s]; Error %s" % (new_path, e)
-            details['errors'].append(msg)
-            _LOG.error(msg)
-            return False, summary, details
-        conduit.save_unit(u)
-        summary['num_units_processed'] = len([file_path])
-        summary['num_units_saved'] = len([file_path])
-        _LOG.debug("unit %s successfully saved" % u)
-        if len(details['errors']):
-            summary['num_errors'] = len(details['errors'])
-            summary["state"] = "FAILED"
-            return False, summary, details
-        _LOG.info("Upload complete with summary: %s; Details: %s" % (summary, details))
-        return True, summary, details
+            pkg = models.Package.from_file(file_path, metadata)
+        except models.InvalidPackageError, e:
+            return self.fail_report(str(e))
+
+        pkg.init_unit(conduit)
+        pkg.move_unit(file_path)
+        pkg.save_unit(conduit)
+        return dict(success_flag=True, summary={}, details={})
 
     def import_units(self, source_repo, dest_repo, import_conduit, config, units=None):
         if not units:
@@ -108,40 +62,15 @@ class WinImporter(Importer):
             units = import_conduit.get_source_units()
         _LOG.info("Importing %s units from %s to %s" % (len(units), source_repo.id, dest_repo.id))
         for u in units:
-            if u.type_id == 'msi':
-                import_conduit.associate_unit(u)
+            import_conduit.associate_unit(u)
         _LOG.debug("%s units from %s have been associated to %s" % (len(units), source_repo.id, dest_repo.id))
+        return units
 
-    def get_file_checksum(self, filename=None, fd=None, file=None, buffer_size=None, hashtype="sha256"):
-        """
-        Compute a file's checksum.
-        """
-        if hashtype in ['sha', 'SHA']:
-            hashtype = 'sha1'
 
-        if buffer_size is None:
-            buffer_size = 65536
+    @classmethod
+    def fail_report(cls, message):
+        # this is the format returned by the original importer. I'm not sure if
+        # anything is actually parsing it
+        details = {'errors': [message]}
+        return {'success_flag': False, 'summary': '', 'details': details}
 
-        if filename is None and fd is None and file is None:
-            raise Exception("no file specified")
-        if file:
-            f = file
-        elif fd is not None:
-            f = os.fdopen(os.dup(fd), "r")
-        else:
-            f = open(filename, "r")
-        # Rewind it
-        f.seek(0, 0)
-        m = hashlib.new(hashtype)
-        while 1:
-            buffer = f.read(buffer_size)
-            if not buffer:
-                break
-            m.update(buffer)
-
-        # cleanup time
-        if file is not None:
-            file.seek(0, 0)
-        else:
-            f.close()
-        return m.hexdigest()

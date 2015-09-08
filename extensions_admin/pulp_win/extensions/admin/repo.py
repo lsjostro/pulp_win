@@ -91,7 +91,8 @@ class MsiRepoCreateCommand(CreateRepositoryCommand):
 
         # Package distributors for the call
         distributors = [
-            dict(distributor_type=ids.TYPE_ID_DISTRIBUTOR_WIN, distributor_config=win_distributor_config,
+            dict(distributor_type_id=ids.TYPE_ID_DISTRIBUTOR_WIN,
+                 distributor_config=win_distributor_config,
                  auto_publish=True, distributor_id=ids.WIN_DISTRIBUTOR_ID),
         ]
 

@@ -31,7 +31,12 @@ CONFIG_REMOVE_MISSING_UNITS_DEFAULT = False
 CONFIG_SERVE_HTTP      = 'serve_http'
 CONFIG_SERVE_HTTPS     = 'serve_https'
 
+CONFIG_REPO_SUBDIR = "repo"
+
 # Profiler configuration key name
 #CONFIG_APPLICABILITY_REPORT_STYLE = 'report_style'
 #APPLICABILITY_REPORT_STYLE_BY_UNITS = 'by_units'
 #APPLICABILITY_REPORT_STYLE_BY_CONSUMERS = 'by_consumers'
+
+PUBLISH_REPO_STEP = 'publish_repo'
+PUBLISH_MODULES_STEP = "publish_modules"
