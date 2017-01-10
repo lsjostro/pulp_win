@@ -16,9 +16,8 @@ the commands.
 
 from gettext import gettext as _
 
-# -- constants ----------------------------------------------------------------
 
-# Root section all MSI specific functionality will be located under
+# Root section all unit specific functionality will be located under
 SECTION_ROOT = 'win'
 
 SECTION_REPO = 'repo'
@@ -29,7 +28,13 @@ SECTION_UPLOADS = 'uploads'
 SECTION_REMOVE = 'remove'
 SECTION_CONTENTS = 'content'
 
+SECTION_SYNC = 'sync'
+SECTION_SYNC_SCHEDULES = 'schedules'
 SECTION_PUBLISH = 'publish'
+
+SECTION_EXPORT = 'export'
+
+SECTION_GROUP = 'group'
 
 DESC_ROOT = _('manage WIN-related content and features')
 DESC_REPO = _('repository lifecycle commands')
@@ -39,13 +44,19 @@ DESC_UPLOADS = _('upload modules into a repository')
 DESC_REMOVE = _('remove copied or uploaded modules from a repository')
 DESC_CONTENTS = _('search the contents of a repository')
 
-DESC_PUBLISH = _('run, schedule, or view the status of publish tasks')
+DESC_SYNC = _('run, schedule, or view the status of sync tasks')
+DESC_SYNC_SCHEDULES = _('manage repository sync schedules')
+DESC_PUBLISH = _('run or view the status of publish tasks')
 
-# -- creation -----------------------------------------------------------------
+DESC_EXPORT = _('run or view the status of a repository export')
+DESC_GROUP_EXPORT = _('run or view the status of a repository group export')
+
+DESC_GROUP = _('repository group commands')
+
 
 def ensure_root(cli):
     """
-    Verifies that the root of WIN-related commands exists in the CLI,
+    Verifies that the root of unit-related commands exists in the CLI,
     creating it using constants from this module if it does not.
 
     :param cli: CLI instance being configured
@@ -84,12 +95,24 @@ def ensure_repo_structure(cli):
         (SECTION_REMOVE, DESC_REMOVE),
         (SECTION_CONTENTS, DESC_CONTENTS),
         (SECTION_UPLOADS, DESC_UPLOADS),
+        (SECTION_SYNC, DESC_SYNC),
         (SECTION_PUBLISH, DESC_PUBLISH),
+        (SECTION_EXPORT, DESC_EXPORT),
+        (SECTION_GROUP, DESC_GROUP)
     )
     for name, description in direct_subsections:
         repo_section.create_subsection(name, description)
 
+    # Add specific third-tier sections
+    sync_section = repo_sync_section(cli)
+    sync_section.create_subsection(SECTION_SYNC_SCHEDULES, DESC_SYNC_SCHEDULES)
+
+    #
+    group_section = repo_group_section(cli)
+    group_section.create_subsection(SECTION_EXPORT, DESC_GROUP_EXPORT)
+
     return repo_section
+
 
 # -- section retrieval --------------------------------------------------------
 
@@ -112,8 +135,49 @@ def repo_uploads_section(cli):
 def repo_contents_section(cli):
     return _find_section(cli, SECTION_ROOT, SECTION_REPO, SECTION_CONTENTS)
 
+
+def repo_sync_section(cli):
+    return _find_section(cli, SECTION_ROOT, SECTION_REPO, SECTION_SYNC)
+
+
+def repo_sync_schedules_section(cli):
+    return _find_section(cli, SECTION_ROOT, SECTION_REPO, SECTION_SYNC,
+                         SECTION_SYNC_SCHEDULES)
+
+
 def repo_publish_section(cli):
     return _find_section(cli, SECTION_ROOT, SECTION_REPO, SECTION_PUBLISH)
+
+
+def repo_export_section(cli):
+    return _find_section(cli, SECTION_ROOT, SECTION_REPO, SECTION_EXPORT)
+
+
+def repo_group_section(cli):
+    """
+    Retrieves the group section from the CLI
+
+    :param cli: CLI instance to search within
+    :type  cli: pulp.client.extensions.core.PulpCli
+
+    :return: section instance that matches the path
+    :rtype:  pulp.client.extensions.core.PulpCliSection
+    """
+    return _find_section(cli, SECTION_ROOT, SECTION_REPO, SECTION_GROUP)
+
+
+def repo_group_export_section(cli):
+    """
+    Retrieves the group export section from the CLI
+
+    :param cli: CLI instance to search within
+    :type  cli: pulp.client.extensions.core.PulpCli
+
+    :return: section instance that matches the path
+    :rtype:  pulp.client.extensions.core.PulpCliSection
+    """
+    return _find_section(cli, SECTION_ROOT, SECTION_REPO, SECTION_GROUP,
+                         SECTION_EXPORT)
 
 
 # -- private ------------------------------------------------------------------

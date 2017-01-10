@@ -3,14 +3,13 @@ pulp_win
 
 Initial Pulp plugin to handle Windows MSI packages
 
-WARNING: Might be lots of bugs. 
+WARNING: Might be lots of bugs.
 
 ### Requirements
 
-Need the following to be able to upload MSIs from Linux:
-  *  msitools-0.01 
-
-http://bonzini.fedorapeople.org/msitools-0.01.tar.gz
+Admin extensions do not need any additional tools.
+Server extensions need msitools, which is available in Fedora. The Fedora 23
+package has been confirmed to work on CentOS 7.
 
 ### Installation
 

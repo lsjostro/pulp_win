@@ -17,13 +17,16 @@ TYPE_ID_IMPORTER_WIN = "win_importer"
 WIN_IMPORTER_ID = TYPE_ID_IMPORTER_WIN
 
 # Set when the distributor is added to the repo and later to refer to it specifically
-WIN_DISTRIBUTOR_ID = 'win_distributor'
+WIN_DISTRIBUTOR_ID = TYPE_ID_DISTRIBUTOR_WIN
 
 TYPE_ID_MSI = "msi"
 UNIT_KEY_MSI = (
-    "ProductName", "ProductVersion", "checksum", "checksumtype")
+    "name", "version", "checksum", "checksumtype")
+EXTRA_FIELDS_MSI = set(['UpgradeCode', 'ProductCode', 'Manufacturer',
+                        'ModuleSignature'])
 
-TYPE_ID_EXE = "exe"
-UNIT_KEY_EXE = UNIT_KEY_MSI
+TYPE_ID_MSM = "msm"
+UNIT_KEY_MSM = UNIT_KEY_MSI
+EXTRA_FIELDS_MSM = set(["guid"])
 
-SUPPORTED_TYPES = set([TYPE_ID_MSI, TYPE_ID_EXE])
+SUPPORTED_TYPES = set([TYPE_ID_MSI, TYPE_ID_MSM])

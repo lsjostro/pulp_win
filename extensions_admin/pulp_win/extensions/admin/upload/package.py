@@ -10,41 +10,79 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 
 from gettext import gettext as _
-import hashlib
 
 from pulp.client.commands.repo.upload import UploadCommand
-from pulp_win.common.ids import TYPE_ID_MSI
+
+from pulp_win.common.ids import TYPE_ID_MSI, TYPE_ID_MSM
 
 
-NAME = 'msi'
-DESC = _('uploads one or more MSIs into a repository')
+NAME_MSI = 'msi'
+DESC_MSI = _('uploads one or more MSI files into a repository')
+SUFFIX_MSI = '.msi'
+
+NAME_MSM = 'msm'
+DESC_MSM = _('uploads one or more MSM files into a repository')
+SUFFIX_MSM = '.msm'
 
 
-class CreateMsiCommand(UploadCommand):
+class _CreatePackageCommand(UploadCommand):
     """
-    Handles initializing and uploading one or more RPMs.
+    Base command for uploading. This shouldn't be instantiated directly
+    outside of this module in favor of one of the type-specific subclasses.
     """
+    TYPE_ID = None
+    SUFFIX = None
+    NAME = None
+    DESCRIPTION = None
 
-    def __init__(self, context, upload_manager, name=NAME, description=DESC):
-        super(CreateMsiCommand, self).__init__(context, upload_manager, name=name, description=description)
+    def __init__(self, context, upload_manager):
+        super(_CreatePackageCommand, self).__init__(
+            context, upload_manager, name=self.NAME,
+            description=self.DESCRIPTION)
+        self.type_id = self.TYPE_ID
+        self.suffix = self.SUFFIX
 
     def determine_type_id(self, filename, **kwargs):
-        return TYPE_ID_MSI
+        return self.TYPE_ID
 
-    def matching_files_in_dir(self, dir):
-        all_files_in_dir = super(CreateMsiCommand, self).matching_files_in_dir(dir)
-        msis = [f for f in all_files_in_dir if f.endswith('.msi')]
-        return msis
+    def matching_files_in_dir(self, directory):
+        all_files_in_dir = super(_CreatePackageCommand, self).matching_files_in_dir(directory)  # noqa
+        pkgs = [f for f in all_files_in_dir if f.endswith(self.suffix)]
+        return pkgs
 
     def generate_unit_key_and_metadata(self, filename, **kwargs):
-        metadata = dict(checksumtype="sha256")
-        m = hashlib.sha256()
-        f = open(filename, 'rb')
-        while 1:
-            buffer = f.read(65536)
-            if not buffer:
-                break
-            m.update(buffer)
-        f.close()
-        metadata.update(checksum=m.hexdigest())
+        # These are extracted server-side, so nothing to do here.
+        metadata = {}
         return {}, metadata
+
+    def succeeded(self, task):
+        """
+        Called when a task has completed with a status indicating success.
+        Subclasses may override this to display a custom message to the user.
+
+        :param task: full task report for the task being displayed
+        :type  task: pulp.bindings.responses.Task
+        """
+        # Check for any errors in the details block of the task
+        if task.result and task.result.get('details') \
+                and task.result.get('details').get('errors'):
+
+            self.prompt.render_failure_message(_('Task Failed'))
+            for error in task.result.get('details').get('errors'):
+                self.prompt.render_failure_message(error)
+        else:
+            super(_CreatePackageCommand, self).succeeded(task)
+
+
+class CreateMsiCommand(_CreatePackageCommand):
+    TYPE_ID = TYPE_ID_MSI
+    NAME = NAME_MSI
+    DESCRIPTION = DESC_MSI
+    SUFFIX = SUFFIX_MSI
+
+
+class CreateMsmCommand(_CreatePackageCommand):
+    TYPE_ID = TYPE_ID_MSM
+    NAME = NAME_MSM
+    DESCRIPTION = DESC_MSM
+    SUFFIX = SUFFIX_MSM

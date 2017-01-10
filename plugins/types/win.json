@@ -4,17 +4,17 @@
         "display_name" : "MSI",
         "description" : "MSI",
         "unit_key" :
-                ["ProductName", "ProductVersion", "checksumtype", "checksum"],
+                ["name", "version", "checksumtype", "checksum"],
         "search_indexes" :
-                ["ProductName", "ProductVersion", "filename", "checksum", "checksumtype"]
+                ["name", "version", "filename", "checksum", "checksumtype"]
     },
     {
-        "id" : "exe",
-        "display_name" : "EXE",
-        "description" : "EXE",
+        "id" : "msm",
+        "display_name" : "MSM",
+        "description" : "MSM",
         "unit_key" :
-                ["ProductName", "ProductVersion", "checksumtype", "checksum"],
+                ["name", "version", "checksumtype", "checksum"],
         "search_indexes" :
-                ["ProductName", "ProductVersion", "filename", "checksum", "checksumtype"]
+                ["name", "version", "filename", "checksum", "checksumtype"]
     }
 ]}

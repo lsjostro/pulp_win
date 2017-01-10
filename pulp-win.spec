@@ -1,22 +1,18 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 %{!?python_sitearch: %global python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")}
 
-%if 0%{?rhel} == 5
-%define pulp_admin 0
-%define pulp_server 0
-%else
 %define pulp_admin 1
 %define pulp_server 1
-%endif
 
 # define required pulp platform version.
-%define pulp_version 2.6.2
+%define pulp_version 2.10.1
 
+%define inst_prefix pulp_win
 
 # ---- Pulp (win) --------------------------------------------------------------
 
 Name: pulp-win
-Version: 2.4.0
+Version: 3.0
 Release: 1%{?dist}
 Summary: Support for Windows content in the Pulp platform
 Group: Development/Languages
@@ -76,15 +72,7 @@ pushd plugins
 popd
 
 mkdir -p %{buildroot}/%{_usr}/lib/pulp/plugins
-
-cp -R plugins/etc/httpd %{buildroot}/%{_sysconfdir}
-
-# Type files
-cp -R plugins/types %{buildroot}/%{_usr}/lib/pulp/plugins
 %endif # End pulp_server if block
-
-# Directories
-mkdir -p %{buildroot}/%{_var}/www/pulp_win/http/repos
 
 # Remove tests
 rm -rf %{buildroot}/%{python_sitelib}/test
@@ -93,23 +81,23 @@ rm -rf %{buildroot}/%{python_sitelib}/test
 rm -rf %{buildroot}
 
 
-# ---- Win Common --------------------------------------------------------------
+# ---- Common --------------------------------------------------------------
 
-%package -n python-pulp-win-common
+%package -n python-%{name}-common
 Summary: Pulp Windows support common library
 Group: Development/Languages
 Obsoletes: pulp-win-plugins-admin <= 2.4.0
 
-%description -n python-pulp-win-common
+%description -n python-%{name}-common
 A collection of modules shared among all Win components.
 
-%files -n python-pulp-win-common
+%files -n python-%{name}-common
 %defattr(-,root,root,-)
-%dir %{python_sitelib}/pulp_win
-%{python_sitelib}/pulp_win_common*.egg-info
-%{python_sitelib}/pulp_win/__init__.py*
-#%{python_sitelib}/pulp_win/extensions/__init__.py*
-%{python_sitelib}/pulp_win/common/
+%dir %{python_sitelib}/%{inst_prefix}
+%{python_sitelib}/%{inst_prefix}_common*.egg-info
+%{python_sitelib}/%{inst_prefix}/__init__.py*
+%{python_sitelib}/%{inst_prefix}/extensions/__init__.py*
+%{python_sitelib}/%{inst_prefix}/common/
 %doc LICENSE
 
 # ---- Plugins -----------------------------------------------------------------
@@ -117,8 +105,9 @@ A collection of modules shared among all Win components.
 %package plugins
 Summary: Pulp Win plugins
 Group: Development/Languages
-Requires: python-pulp-win-common = %{version}
-Requires: pulp-server = %{pulp_version}
+Requires: python-%{name}-common = %{version}-%{release}
+Requires: pulp-server
+Requires: pulp-rpm-plugins
 Requires: msitools
 Obsoletes: pulp-win-plugins-server <= 2.4.0
 
@@ -128,12 +117,11 @@ to provide Win specific support.
 
 %files plugins
 %defattr(-,root,root,-)
-%{python_sitelib}/pulp_win/plugins/
-%{python_sitelib}/pulp_win_plugins*.egg-info
-%config(noreplace) %{_sysconfdir}/httpd/conf.d/pulp_win.conf
+%{python_sitelib}/%{inst_prefix}/plugins/
+%{python_sitelib}/%{inst_prefix}_plugins*.egg-info
+%config(noreplace) %{_sysconfdir}/httpd/conf.d/%{inst_prefix}.conf
 %{_usr}/lib/pulp/plugins/types/win.json
 %defattr(-,apache,apache,-)
-%{_var}/www/pulp_win/http/repos
 %defattr(-,root,root,-)
 %doc LICENSE
 %endif # End pulp_server if block
@@ -144,8 +132,8 @@ to provide Win specific support.
 %package admin-extensions
 Summary: The Win admin client extensions
 Group: Development/Languages
-Requires: pulp-admin-client = %{pulp_version}
-Requires: python-pulp-win-common = %{version}
+Requires: pulp-admin-client
+Requires: python-%{name}-common = %{version}-%{release}
 
 %description admin-extensions
 A collection of extensions that supplement and override generic admin
@@ -153,9 +141,9 @@ client capabilites with Win specific features.
 
 %files admin-extensions
 %defattr(-,root,root,-)
-%{python_sitelib}/pulp_win_extensions_admin*.egg-info
-%{python_sitelib}/pulp_win/extensions/__init__.py*
-%{python_sitelib}/pulp_win/extensions/admin/
+%{python_sitelib}/%{inst_prefix}_extensions_admin*.egg-info
+%{python_sitelib}/%{inst_prefix}/extensions/__init__.py*
+%{python_sitelib}/%{inst_prefix}/extensions/admin/
 %doc LICENSE
 %endif # End pulp_admin if block
 

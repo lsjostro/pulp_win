@@ -11,16 +11,63 @@ from gettext import gettext as _
 
 from pulp.client.commands.unit import UnitRemoveCommand
 
-from pulp_win.common.ids import TYPE_ID_MSI
+from pulp_win.extensions.admin import units_display, criteria_utils
+from pulp_win.common.constants import DISPLAY_UNITS_THRESHOLD
+from pulp_win.common.ids import TYPE_ID_MSI, TYPE_ID_MSM
 
-# -- constants ----------------------------------------------------------------
-
-DESC_MSI = _('remove MSIs from a repository')
+DESC_MSI = _('remove MSI units from a repository')
+DESC_MSM = _('remove MSM units from a repository')
 
 # -- commands -----------------------------------------------------------------
 
-class MsiRemoveCommand(UnitRemoveCommand):
 
-    def __init__(self, context):
-        super(MsiRemoveCommand, self).__init__(
-                context, name='msi', description=DESC_MSI, type_id=TYPE_ID_MSI)
+class BaseRemoveCommand(UnitRemoveCommand):
+    """
+    CLI Command for removing a unit from a repository
+    """
+    TYPE_ID = None
+    DESCRIPTION = None
+    NAME = None
+
+    def __init__(self, context, unit_threshold=None):
+        name = self.NAME or self.TYPE_ID
+        if unit_threshold is None:
+            unit_threshold = DISPLAY_UNITS_THRESHOLD
+        super(BaseRemoveCommand, self).__init__(
+            context, name=name, description=self.DESCRIPTION,
+            type_id=self.TYPE_ID)
+
+        self.unit_threshold = unit_threshold
+
+    def get_formatter_for_type(self, type_id):
+        """
+        Hook to get a the formatter for a given type
+
+        :param type_id: the type id for which we need to get the formatter
+        :type type_id: str
+        """
+        return units_display.get_formatter_for_type(type_id)
+
+
+class PackageRemoveCommand(BaseRemoveCommand):
+    """
+    Used to intercept the criteria and use sort indexes when necessary.
+    """
+
+    @staticmethod
+    def _parse_key_value(args):
+        return criteria_utils.parse_key_value(args)
+
+    @classmethod
+    def _parse_sort(cls, sort_args):
+        return criteria_utils.parse_sort(BaseRemoveCommand, sort_args)
+
+
+class MsiRemoveCommand(PackageRemoveCommand):
+    TYPE_ID = TYPE_ID_MSI
+    DESCRIPTION = DESC_MSI
+
+
+class MsmRemoveCommand(PackageRemoveCommand):
+    TYPE_ID = TYPE_ID_MSM
+    DESCRIPTION = DESC_MSM
