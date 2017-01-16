@@ -1,5 +1,5 @@
-pulp_win
-========
+pulp_win (Project moved to https://github.com/mibanescu/pulp_win)
+=================================================================
 
 Initial Pulp plugin to handle Windows MSI packages
 
